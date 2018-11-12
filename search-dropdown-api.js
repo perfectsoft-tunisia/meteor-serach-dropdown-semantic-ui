@@ -14,6 +14,9 @@ export class SearchDropdown {
 
         Meteor.methods({
             [methodName](searchText) {
+                if (!searchText) {
+                    return [];
+                }
                 
                 let user;
 

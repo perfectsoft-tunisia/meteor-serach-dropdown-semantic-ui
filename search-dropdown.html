@@ -3,11 +3,6 @@
         <div class="ui floating dropdown labeled search icon button " id="{{id}}">
             <i class="icon">{{> icon name=icon}}</i>
             <span class="text">{{currentOptionLabel}}</span>
-            <div class="menu">
-                {{#each results}}
-                    <div class="item" data-value="{{value}}">{{label}}</div>
-                {{/each}}
-            </div>
         </div>
     {{/with}}
 </template>
