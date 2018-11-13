@@ -5,21 +5,12 @@ import {Mongo} from 'meteor/mongo';
 
 Template.SearchDropdown.onCreated(function () {
     this.ResultsCollection = new Mongo.Collection(null);
-    this.textSearchCollection = new Mongo.Collection(null);
-    this.ResultsCollection.insert({
-        name: this.data.currentOptionLabel,
-        value: 'all',
-        _id: 'all',
-        selected: true
-    })
+    this.textSearchCollection = new Mongo.Collection(null);    
 });
 
 Template.SearchDropdown.helpers({
     options() {
-        let options =  _.pick(this.dropdown, 'id', 'icon');
-        options.currentOptionLabel = this.currentOptionLabel;
-
-        return options;        
+        return _.pick(this.dropdown, 'id', 'icon');       
     },
     results() {
         return Template.instance().ResultsCollection.find();
@@ -38,9 +29,28 @@ Template.SearchDropdown.onRendered(function () {
     let template = this;
     if (this.data.onChange) {
         const onChange = function (val, text, $elem) {
+            template.currentOption = {label: text, value: val};
             template.data.onChange(val, text, $elem, template.data.id);
         }
         dropdownOptions.onChange = onChange;
+    } else {
+        dropdownOptions.onChange = function (val, text) {
+            template.currentOption = {label: text, value: val};
+        };
+    }
+
+    if (this.data.placeholder) {
+        dropdownOptions.placeholder = this.data.placeholder;
+    }
+    if (this.data.currentOption) {
+        this.currentOption = this.data.currentOption;
+        this.ResultsCollection.insert({
+            name: this.data.currentOption.label,
+            value: this.data.currentOption.value,
+            _id: this.data.currentOption.value,
+        })
+    } else {
+        this.currentOption = {};
     }
 
     $dropdown.dropdown(dropdownOptions);
@@ -52,6 +62,13 @@ Template.SearchDropdown.onRendered(function () {
         $dropdown.dropdown('change values', this.ResultsCollection.find({}).fetch());
         $search.trigger(inputEvent)
     });
+
+    if (this.data.currentOption) {
+        this.currentOption = this.data.currentOption;
+        $dropdown.dropdown('set selected', this.currentOption.value);
+    } else {
+        this.currentOption = {};
+    }
 });
 
 Template.SearchDropdown.events({
