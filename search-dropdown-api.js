@@ -9,7 +9,7 @@ export class SearchDropdown {
         for (let key in options) {
             this[key] = options[key];
         }
-        
+
         const methodName = 'SearchDropdown_' + instance.id;
 
         Meteor.methods({
@@ -17,7 +17,7 @@ export class SearchDropdown {
                 if (!searchText) {
                     return [];
                 }
-                
+
                 let user;
 
                 if (instance.needUser) {
@@ -48,7 +48,7 @@ export class SearchDropdown {
 
                 selector[searchKey] = searchValue;
 
-                return instance.collection.find(selector, {fileds: instance.fields}).fetch();
+                return instance.collection.find(selector, {fields: instance.fields}).fetch();
             }
         });
 

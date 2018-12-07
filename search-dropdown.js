@@ -1,11 +1,12 @@
 import {Template} from 'meteor/templating';
 import {_} from 'meteor/underscore';
 import {Mongo} from 'meteor/mongo';
+import {$} from 'meteor/jquery';
 
 
 Template.SearchDropdown.onCreated(function () {
     this.ResultsCollection = new Mongo.Collection(null);
-    this.textSearchCollection = new Mongo.Collection(null); 
+    this.textSearchCollection = new Mongo.Collection(null);
 
     const dropdownOptions = this.data.dropdown;
     if (this.data.smallSet) {
@@ -15,8 +16,8 @@ Template.SearchDropdown.onCreated(function () {
         const valueKey = dropdownOptions.valueKey;
 
         Meteor.call(methodName, querry, (error, result) => {
-            if (!error) {     
-                result.forEach((data) => {           
+            if (!error) {
+                result.forEach((data) => {
                     this.ResultsCollection.upsert(data[valueKey], {$set: {
                         name: data[labelKey],
                         value: data[valueKey]
@@ -30,19 +31,20 @@ Template.SearchDropdown.onCreated(function () {
 
 Template.SearchDropdown.helpers({
     options() {
-        return _.pick(this.dropdown, 'id', 'icon');       
+        return _.pick(this.dropdown, 'id', 'icon');
     },
     results() {
         return Template.instance().ResultsCollection.find();
     }
 });
 
-Template.SearchDropdown.onRendered(function () {    
-    
+Template.SearchDropdown.onRendered(function () {
+
     let dropdownOptions = {
         fullTextSearch: true,
         ignoreCase: true,
-        match: 'text'
+        match: 'text',
+        forceSelection: false
     };
 
     const $dropdown = this.$('.dropdown');
@@ -51,14 +53,18 @@ Template.SearchDropdown.onRendered(function () {
 
     if (this.data.onChange) {
         const onChange = function (val, text, $elem) {
-            template.currentOption = {label: text, value: val};
-            template.data.onChange(val, text, $elem, template.data.id);
-        }
+            if (!template.valueDidNotReallyChanged && template.currentOption.value != val) {
+                template.currentOption = {label: text, value: val};
+                template.data.onChange(val, text, $elem, template.data.id);
+            }
+        };
         dropdownOptions.onChange = onChange;
-        
+
     } else {
         dropdownOptions.onChange = function (val, text) {
-            template.currentOption = {label: text, value: val};
+            if (!template.valueDidNotReallyChanged && template.currentOption.value != val) {
+                template.currentOption = {label: text, value: val};
+            }
         };
 
     }
@@ -74,7 +80,7 @@ Template.SearchDropdown.onRendered(function () {
             _id: this.data.currentOption.value,
         });
     } else {
-        this.currentOption = {};
+        this.currentOption = {value: ''};
     }
 
     $dropdown.dropdown(dropdownOptions);
@@ -83,28 +89,28 @@ Template.SearchDropdown.onRendered(function () {
     const $search = $dropdown.find('.search');
 
     this.autorun(() => {
-        let dropdownOptions = this.ResultsCollection.find({}).fetch();
-        const oldValue = $dropdown.dropdown('get value');
+        let dropdownOptions = this.ResultsCollection.find({}).map((option) => {
+            if (this.currentOption.value == option.value) {
+                option.selected = true;
+            }
+
+            return option;
+        });
+
+        this.valueDidNotReallyChanged = true;
         $dropdown.dropdown('change values', dropdownOptions);
-        if (this.data.smallSet) {
-            $dropdown.dropdown('set selected', oldValue);
+        this.valueDidNotReallyChanged = false;
+
+        if (!this.data.smallSet) {
+            $search.trigger(inputEvent);
         }
-        $search.trigger(inputEvent)
     });
-
-    if (this.data.currentOption) {
-        this.currentOption = this.data.currentOption;
-        $dropdown.dropdown('set selected', this.currentOption.value);
-
-    } else {
-        this.currentOption = {};
-    }
 });
 
 Template.SearchDropdown.events({
     'keyup input.search': _.debounce(function (event, template) {
         if (template.data.smallSet) {
-            return 
+            return;
         }
 
         event.preventDefault();
@@ -116,14 +122,14 @@ Template.SearchDropdown.events({
 
         let wasSearchedQuery = template.textSearchCollection.findOne({text: query});
         if (wasSearchedQuery) {
-            return
+            return;
         } else {
             $(event.currentTarget).closest('.dropdown').addClass('loading');
             template.textSearchCollection.insert({text: query});
             Meteor.call(methodName, query, (error, result) => {
                 if (error) {
                     console.error(error);
-                } else {    
+                } else {
                     $(event.currentTarget).closest('.dropdown').removeClass('loading');
                     result.forEach((data) => {
                         template.ResultsCollection.upsert(data[valueKey], {$set: {
@@ -132,7 +138,7 @@ Template.SearchDropdown.events({
                         }});
                     });
                 }
-            });        
-        }        
+            });
+        }
     },300),
 });

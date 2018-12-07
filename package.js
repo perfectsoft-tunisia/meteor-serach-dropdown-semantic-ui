@@ -1,6 +1,6 @@
 Package.describe({
   name: 'perfectsofttunisia:search-dropdown-semantic-ui',
-  version: '0.0.1',
+  version: '1.0.0',
   // Brief, one-line summary of the package.
   summary: '',
   // URL to the Git repository containing the source code for this package.
@@ -12,14 +12,14 @@ Package.describe({
 
 Package.onUse(function(api) {
   api.versionsFrom('1.2');
-  api.use(['ecmascript', 'templating', 'underscore', 'mongo']);
+  api.use(['ecmascript', 'templating', 'underscore', 'mongo', 'jquery']);
 
   api.addFiles([
     'search-dropdown.html',
     'search-dropdown.js'
   ], 'client');
 
-  api.mainModule('search-dropdown-api.js');  
+  api.mainModule('search-dropdown-api.js');
 });
 
 Package.onTest(function(api) {
