@@ -41,7 +41,7 @@ Template.SearchDropdown.helpers({
 Template.SearchDropdown.onRendered(function () {
 
     let dropdownOptions = {
-        fullTextSearch: true,
+        fullTextSearch: 'exact',
         ignoreCase: true,
         match: 'text',
         forceSelection: false
